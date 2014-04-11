@@ -2,4 +2,4 @@
 
 pub install
 
-dart bitset_test.dart
+dart test/bitset_test.dart

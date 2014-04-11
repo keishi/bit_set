@@ -1,0 +1,9 @@
+name: bitset
+version: 0.0.1
+author: Keishi Hattori <keishi.hattori@gmail.com>
+description: BitSet class.
+homepage: http://github.com/keishi
+documentation: http://github.com/keishi
+dev_dependencies:
+  benchmark_harness: any
+  unittest: any

@@ -11,9 +11,9 @@ abstract class BitSet {
    * represent bits with indices in the range 0 through `bitCount`-1. All
    * bits are initially false.
    */
-  factory BitSet([int bitCount]) => new VariableLengthBitSet(bitCount);
+  factory BitSet([int bitCount, int bitsPerElement]) => new VariableLengthBitSet(bitCount, bitsPerElement);
   factory BitSet.fromBitSet(BitSet bitSet) => new VariableLengthBitSet.fromBitSet(bitSet);
-  factory BitSet.fromString(String binaryString) => new VariableLengthBitSet.fromString(binaryString);
+  factory BitSet.fromString(String binaryString, [int bitsPerElement]) => new VariableLengthBitSet.fromString(binaryString, bitsPerElement);
   BitSet.base();
   /**
    * Sets the bit at `index` to true.
@@ -212,7 +212,7 @@ class VariableLengthBitSet extends BitSet {
   List<int> _elements;
   int _usedElements;
 
-  VariableLengthBitSet([int bitCount = 0, bitsPerElement]) : super.base() {
+  VariableLengthBitSet([int bitCount = 0, int bitsPerElement]) : super.base() {
     if (bitCount == null) {
       bitCount = 0;
     }
@@ -236,10 +236,10 @@ class VariableLengthBitSet extends BitSet {
     throw new UnimplementedError();
     return null;
   }
-  factory VariableLengthBitSet.fromString(String binaryString) {
+  factory VariableLengthBitSet.fromString(String binaryString, [int bitsPerElement]) {
     List<int> codeUnits = binaryString.codeUnits;
     int bitCount = binaryString.length;
-    VariableLengthBitSet bitSet = new VariableLengthBitSet(bitCount);
+    VariableLengthBitSet bitSet = new VariableLengthBitSet(bitCount, bitsPerElement);
     for (int i = 0; i < binaryString.length; i++) {
       String character = binaryString[i];
       if (character == "1") {

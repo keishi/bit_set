@@ -211,6 +211,7 @@ class VariableLengthBitSet extends BitSet {
   int _bitsPerElement;
   List<int> _elements;
   int _usedElements;
+  int _elementBitIndexMask;
 
   VariableLengthBitSet([int bitCount = 0, int bitsPerElement]) : super.base() {
     if (bitCount == null) {
@@ -230,6 +231,7 @@ class VariableLengthBitSet extends BitSet {
     }
     _elements = _arrayForBits(bitCount);
     _bitsPerElement = (_elements as TypedData).elementSizeInBytes * 8;
+    _elementBitIndexMask = _createElementBitIndexMask();
     _usedElements = 0;
   }
   factory VariableLengthBitSet.fromBitSet(BitSet bitSet) {
@@ -250,6 +252,22 @@ class VariableLengthBitSet extends BitSet {
     }
     return bitSet;
   }
+  int _createElementBitIndexMask() {
+    if (_bitsPerElement == 64) {
+      return 0x3f;
+    }
+    if (_bitsPerElement == 32) {
+      return 0x1f;
+    }
+    if (_bitsPerElement == 16) {
+      return 0xf;
+    }
+    if (_bitsPerElement == 8) {
+      return 0x7;
+    }
+    assert(false);
+    return 0;
+  }
   List<int> _arrayForBits(int bitCount) {
     int capacity = ((bitCount + _bitsPerElement - 1)/ _bitsPerElement).floor();
     if (_bitsPerElement == 64) {
@@ -264,6 +282,7 @@ class VariableLengthBitSet extends BitSet {
     if (_bitsPerElement == 8) {
       return new Uint32List(capacity);
     }
+    assert(false);
     return null;
   }
   void _shrinkSize() {
@@ -309,37 +328,53 @@ class VariableLengthBitSet extends BitSet {
     }
     return count;
   }
+  int _bitIndexToElementIndex(int bitIndex) {
+    if (_bitsPerElement == 64) {
+      return bitIndex >> 6;
+    } else if (_bitsPerElement == 32) {
+      return bitIndex >> 5;
+    } else if (_bitsPerElement == 16) {
+      return bitIndex >> 4;
+    } else if (_bitsPerElement == 8) {
+      return bitIndex >> 3;
+    }
+    assert(false);
+    return 0;
+  }
+  int _bitIndexToElementBitIndex(int bitIndex) {
+    return bitIndex & _elementBitIndexMask;
+  }
   void setBit(int index) {
     if (index < 0) {
       throw new RangeError("Index ($index) must be greater than or equal to 0.");
     }
-    int elementIndex = (index / _bitsPerElement).floor();
+    int elementIndex = _bitIndexToElementIndex(index);
     if (elementIndex >= _elements.length) {
       _ensureCapacity(elementIndex + 1);
     }
-    _elements[elementIndex] |= (1 << (index % _bitsPerElement));
+    _elements[elementIndex] |= 1 << _bitIndexToElementBitIndex(index);
     _usedElements = max(_usedElements, elementIndex + 1);
   }
   void clearBit(int index) {
     if (index < 0) {
       throw new RangeError("Index ($index) must be greater than or equal to 0.");
     }
-    int elementIndex = (index / _bitsPerElement).floor();
+    int elementIndex = _bitIndexToElementIndex(index);
     if (elementIndex >= _elements.length) {
       return;
     }
-    _elements[elementIndex] &= ~(1 << (index % _bitsPerElement));
+    _elements[elementIndex] &= ~(1 << _bitIndexToElementBitIndex(index));
     _shrinkSize();
   }
   void flipBit(int index) {
     if (index < 0) {
       throw new RangeError("Index ($index) must be greater than or equal to 0.");
     }
-    int elementIndex = (index / _bitsPerElement).floor();
+    int elementIndex = _bitIndexToElementIndex(index);
     if (elementIndex >= _elements.length) {
       _ensureCapacity(elementIndex + 1);
     }
-    _elements[elementIndex] ^= (1 << (index % _bitsPerElement));
+    _elements[elementIndex] ^= (1 << _bitIndexToElementBitIndex(index));
     _usedElements = max(_usedElements, elementIndex + 1);
     _shrinkSize();
   }
@@ -396,11 +431,11 @@ class VariableLengthBitSet extends BitSet {
     if (index < 0) {
       throw new RangeError("Index ($index) must be greater than or equal to 0.");
     }
-    int elementIndex = (index / _bitsPerElement).floor();
+    int elementIndex = _bitIndexToElementIndex(index);
     if (elementIndex >= _usedElements) {
       return false;
     }
-    return (_elements[elementIndex] & (1 << (index % _bitsPerElement))) != 0;
+    return (_elements[elementIndex] & (1 << _bitIndexToElementBitIndex(index))) != 0;
   }
   void operator []=(int index, bool bit) {
     if (bit) {

@@ -47,9 +47,9 @@ abstract class BitSet {
 }
 
 abstract class FixedLengthBitSet extends BitSet {
-  factory FixedLengthBitSet([bitCount]) {
-    return new IntFixedLengthBitSet(bitCount);
-  }
+  factory FixedLengthBitSet([bitCount]) => new IntFixedLengthBitSet(bitCount);
+  factory FixedLengthBitSet.fromBitSet(BitSet bitSet) => new IntFixedLengthBitSet.fromBitSet(bitSet);
+  factory FixedLengthBitSet.fromString(String binaryString, [int bitsPerElement]) => new IntFixedLengthBitSet.fromString(binaryString, bitsPerElement);
   FixedLengthBitSet.base() : super.base();
 }
 
@@ -62,6 +62,24 @@ class IntFixedLengthBitSet extends FixedLengthBitSet {
     }
     _data = 0;
     _length = bitCount;
+  }
+  factory IntFixedLengthBitSet.fromBitSet(BitSet bitSet) {
+    throw new UnimplementedError();
+    return null;
+  }
+  factory IntFixedLengthBitSet.fromString(String binaryString, [int bitsPerElement]) {
+    List<int> codeUnits = binaryString.codeUnits;
+    int bitCount = binaryString.length;
+    IntFixedLengthBitSet bitSet = new IntFixedLengthBitSet(bitCount);
+    for (int i = 0; i < binaryString.length; i++) {
+      String character = binaryString[i];
+      if (character == "1") {
+        bitSet[bitCount - i - 1] = true;
+      } else if (character != "0") {
+        throw new ArgumentError("Binary string ($binaryString) should only contain 0 or 1.");
+      }
+    }
+    return bitSet;
   }
   void setBit(int index) {
     if (index < 0) {
@@ -194,6 +212,22 @@ class IntFixedLengthBitSet extends FixedLengthBitSet {
     } else {
       throw new UnimplementedError();
     }
+  }
+  bool operator ==(BitSet other) {
+    int thisLength = length;
+    if (thisLength != other.length) {
+      return false;
+    }
+    if (other is IntFixedLengthBitSet) {
+      return _data == other._data;
+    } else {
+      for (int i = 0; i < thisLength; ++i) {
+        if (this[i] != other[i]) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
   String toString() {
     StringBuffer buffer = new StringBuffer();

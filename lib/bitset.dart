@@ -3,7 +3,7 @@ library bitset;
 import 'dart:math';
 import 'dart:typed_data';
 
-const bool _SUPPORTS_BIG_INT = (1 << 31) > 0;
+const bool _SUPPORTS_BIG_INT = (1 << 63) > 0;
 const int _CHAR_CODE_0 = 0x30;
 const int _CHAR_CODE_1 = 0x31;
 

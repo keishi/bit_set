@@ -2,8 +2,16 @@ import 'package:unittest/unittest.dart';
 import 'package:bitset/bitset.dart';
 
 void main() {
-  
-  for (int bitsPerElement in [8, 16, 32, 64]) {
+
+  Set<int> supportedBitsPerElement = new Set<int>.from([8, 16]);
+  if ((1 << 31) > 0) {
+    supportedBitsPerElement.add(32);
+  }
+  if ((1 << 63) > 0) {
+    supportedBitsPerElement.add(64);
+  }
+
+  for (int bitsPerElement in supportedBitsPerElement) {
     test("fromString/toString [$bitsPerElement]", () {
       expect(new BitSet.fromString("0", bitsPerElement).toString(), equals(""));
       expect(new BitSet.fromString("1", bitsPerElement).toString(), equals("1"));
@@ -149,7 +157,7 @@ void main() {
       expect(new BitSet.fromString("10000000000000000000000000000000000000000000000000000000000000000", bitsPerElement) | new BitSet.fromString("1", bitsPerElement), equals(new BitSet.fromString("10000000000000000000000000000000000000000000000000000000000000001")));
       expect(new BitSet.fromString("1", bitsPerElement) | new BitSet.fromString("10000000000000000000000000000000000000000000000000000000000000000", bitsPerElement), equals(new BitSet.fromString("10000000000000000000000000000000000000000000000000000000000000001")));
     });
-    
+
     test("not [$bitsPerElement]", () {
       expect(~new BitSet.fromString("0", bitsPerElement), equals(new BitSet.fromString("")));
       expect(~new BitSet.fromString("1", bitsPerElement), equals(new BitSet.fromString("0")));

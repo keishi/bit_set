@@ -120,18 +120,15 @@ class VariableLengthBitSetEratosthenesSieveBenchmark extends BenchmarkBase {
 }
 
 main() {
-  VariableLengthBitSetEratosthenesSieveBenchmark.main(8);
-  VariableLengthBitSetEratosthenesSieveBenchmark.main(16);
-  VariableLengthBitSetEratosthenesSieveBenchmark.main(32);
-  VariableLengthBitSetEratosthenesSieveBenchmark.main(64);
-
-  VariableLengthBitSetCountBenchmark.main(8);
-  VariableLengthBitSetCountBenchmark.main(16);
-  VariableLengthBitSetCountBenchmark.main(32);
-  VariableLengthBitSetCountBenchmark.main(64);
-
-  VariableLengthBitSetXorBenchmark.main(8);
-  VariableLengthBitSetXorBenchmark.main(16);
-  VariableLengthBitSetXorBenchmark.main(32);
-  VariableLengthBitSetXorBenchmark.main(64);
+  Set<int> supportedBitsPerElement = new Set<int>.from([8, 16]);
+  if ((1 << 31) > 0) {
+    supportedBitsPerElement.add(32);
+  }
+  if ((1 << 63) > 0) {
+    supportedBitsPerElement.add(64);
+  }
+  
+  supportedBitsPerElement.forEach((n) => VariableLengthBitSetEratosthenesSieveBenchmark.main(n));
+  supportedBitsPerElement.forEach((n) => VariableLengthBitSetCountBenchmark.main(n));
+  supportedBitsPerElement.forEach((n) => VariableLengthBitSetXorBenchmark.main(n));
 }

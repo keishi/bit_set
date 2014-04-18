@@ -44,4 +44,16 @@ void main() {
     expect(bs.toString(), equals("1000000001"));
   });
 
+  test("not", () {
+    BitSet bs = new FixedLengthBitSet.fromString("10101101110");
+
+    expect((~bs).length, 11);
+    expect((~bs).toInt(), equals(657));
+    expect((~bs).toString(), equals("01010010001"));
+
+    expect((~(~bs)).length, 11);
+    expect((~(~bs)).toInt(), equals(1390));
+    expect((~(~bs)).toString(), equals("10101101110"));
+  });
+
 }

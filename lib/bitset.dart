@@ -4,6 +4,8 @@ import 'dart:math';
 import 'dart:typed_data';
 
 const bool _SUPPORTS_BIG_INT = (1 << 31) > 0;
+const int _CHAR_CODE_0 = 0x30;
+const int _CHAR_CODE_1 = 0x31;
 
 abstract class BitSet {
   /**
@@ -39,6 +41,7 @@ abstract class BitSet {
   bool get isEmpty;
   bool operator [](int index);
   void operator []=(int index, bool bit);
+  BitSet operator ~();
   BitSet operator ^(BitSet other);
   BitSet operator &(BitSet other);
   BitSet operator |(BitSet other);
@@ -56,12 +59,21 @@ abstract class FixedLengthBitSet extends BitSet {
 class IntFixedLengthBitSet extends FixedLengthBitSet {
   int _length;
   int _data;
+  int _mask;
   IntFixedLengthBitSet([int bitCount = 0]) : super.base() {
     if (!_SUPPORTS_BIG_INT && bitCount > 31) {
       throw new ArgumentError("Bit count ($bitCount) must be <= 31.");
     }
     _data = 0;
     _length = bitCount;
+    if (_SUPPORTS_BIG_INT || _length < 31) {
+      _mask = (1 << _length) - 1;
+    } else {
+      _mask = 0;
+      for (int i = 0; i < _length; ++i) {
+        _mask |= 1 << i;
+      }
+    }
   }
   factory IntFixedLengthBitSet.fromBitSet(BitSet bitSet) {
     throw new UnimplementedError();
@@ -69,14 +81,14 @@ class IntFixedLengthBitSet extends FixedLengthBitSet {
   }
   factory IntFixedLengthBitSet.fromString(String binaryString, [int bitsPerElement]) {
     List<int> codeUnits = binaryString.codeUnits;
-    int bitCount = binaryString.length;
+    int bitCount = codeUnits.length;
     IntFixedLengthBitSet bitSet = new IntFixedLengthBitSet(bitCount);
-    for (int i = 0; i < binaryString.length; i++) {
-      String character = binaryString[i];
-      if (character == "1") {
+    for (int i = 0; i < codeUnits.length; i++) {
+      int code = codeUnits[i];
+      if (code == _CHAR_CODE_1) {
         bitSet[bitCount - i - 1] = true;
-      } else if (character != "0") {
-        throw new ArgumentError("Binary string ($binaryString) should only contain 0 or 1.");
+      } else if (code != _CHAR_CODE_0) {
+        throw new ArgumentError("Binary string ($binaryString) should only contain 0 or 1. Found ${new String.fromCharCode(code)}.");
       }
     }
     return bitSet;
@@ -167,7 +179,8 @@ class IntFixedLengthBitSet extends FixedLengthBitSet {
   int get length => _length;
   void set length(int newLength) {
     throw new UnimplementedError("Fixed length bit sets do not support setting length");
-  }bool operator [](int index) {
+  }
+  bool operator [](int index) {
     if (index < 0) {
       throw new RangeError("Index ($index) must be greater than or equal to 0.");
     }
@@ -182,6 +195,11 @@ class IntFixedLengthBitSet extends FixedLengthBitSet {
     } else {
       clearBit(index);
     }
+  }
+  BitSet operator ~() {
+    IntFixedLengthBitSet result = new IntFixedLengthBitSet(_length);
+    result._data = ~_data & _mask;
+    return result;
   }
   BitSet operator ^(BitSet other) {
     if (other is IntFixedLengthBitSet) {
@@ -274,14 +292,14 @@ class VariableLengthBitSet extends BitSet {
   }
   factory VariableLengthBitSet.fromString(String binaryString, [int bitsPerElement]) {
     List<int> codeUnits = binaryString.codeUnits;
-    int bitCount = binaryString.length;
+    int bitCount = codeUnits.length;
     VariableLengthBitSet bitSet = new VariableLengthBitSet(bitCount, bitsPerElement);
-    for (int i = 0; i < binaryString.length; i++) {
-      String character = binaryString[i];
-      if (character == "1") {
+    for (int i = 0; i < codeUnits.length; i++) {
+      int code = codeUnits[i];
+      if (code == _CHAR_CODE_1) {
         bitSet[bitCount - i - 1] = true;
-      } else if (character != "0") {
-        throw new ArgumentError("Binary string ($binaryString) should only contain 0 or 1.");
+      } else if (code != _CHAR_CODE_0) {
+        throw new ArgumentError("Binary string ($binaryString) should only contain 0 or 1. Found ${new String.fromCharCode(code)}.");
       }
     }
     return bitSet;
@@ -477,6 +495,21 @@ class VariableLengthBitSet extends BitSet {
     } else {
       clearBit(index);
     }
+  }
+  BitSet operator ~() {
+    VariableLengthBitSet result = new VariableLengthBitSet(this.length, _bitsPerElement);
+    result._usedElements = _usedElements;
+    int mask = (1 << _bitsPerElement) - 1;
+    for (int i = 0; i < _usedElements; ++i) {
+      result._elements[i] = ~_elements[i] & mask;
+    }
+    if (_usedElements > 0) {
+      int lastElementBitLength = _elements[_usedElements - 1].bitLength;
+      mask = (1 << lastElementBitLength) - 1;
+      result._elements[_usedElements - 1] &= mask;
+    }
+    result._shrinkSize();
+    return result;
   }
   BitSet operator ^(BitSet other) {
     if (other is VariableLengthBitSet && _bitsPerElement == other._bitsPerElement) {

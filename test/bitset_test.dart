@@ -149,5 +149,14 @@ void main() {
       expect(new BitSet.fromString("10000000000000000000000000000000000000000000000000000000000000000", bitsPerElement) | new BitSet.fromString("1", bitsPerElement), equals(new BitSet.fromString("10000000000000000000000000000000000000000000000000000000000000001")));
       expect(new BitSet.fromString("1", bitsPerElement) | new BitSet.fromString("10000000000000000000000000000000000000000000000000000000000000000", bitsPerElement), equals(new BitSet.fromString("10000000000000000000000000000000000000000000000000000000000000001")));
     });
+    
+    test("not [$bitsPerElement]", () {
+      expect(~new BitSet.fromString("0", bitsPerElement), equals(new BitSet.fromString("")));
+      expect(~new BitSet.fromString("1", bitsPerElement), equals(new BitSet.fromString("0")));
+      expect(~new BitSet.fromString("10", bitsPerElement), equals(new BitSet.fromString("01")));
+      expect(~new BitSet.fromString("11", bitsPerElement), equals(new BitSet.fromString("00")));
+      expect(~new BitSet.fromString("100000000000000000000000000000000000000000000000000000000000000000000000000001", bitsPerElement), equals(new BitSet.fromString("11111111111111111111111111111111111111111111111111111111111111111111111111110")));
+      expect(~new BitSet.fromString("111111111111111111111111111111111111111111111111111111111111111111111111111110", bitsPerElement), equals(new BitSet.fromString("1")));
+    });
   }
 }
